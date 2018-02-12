@@ -39,28 +39,11 @@ class API extends REST_Controller {
 
 			$from = $this->post('from');
 
-			$this->log_model->add($phone, $openid . " request xcode from " . $from, "xcode", "xcx request");
-
-			$existMember = $this->existMemberIT($phone);
-
-			if ($existMember->Ret == 1 && $from == 'xcx') {
-
-				$this->response($this->returnMsg('2', lang("member already at request code")), REST_Controller::HTTP_OK);
-
-				return;
-
-			}
-
-			if ($existMember->Ret == 0 && $from == 'xcx-bind') {
-
-				$this->response($this->returnMsg('2', lang("member not exist at request code")), REST_Controller::HTTP_OK);
-
-				return;
-			}
+			$this->log_model->frontEnd($phone, "request", "xcode");
 
 			if ($phone === null || !is_numeric($phone) || strlen($phone) != 11) {
 
-				$this->response($this->returnMsg('-1', "invalid phone number"), REST_Controller::HTTP_OK);
+				$this->response($this->returnMsg('1', 'invalid phone number', true), REST_Controller::HTTP_OK);
 
 			} else {
 
@@ -74,29 +57,94 @@ class API extends REST_Controller {
 
 						$this->login_model->saveValidationCode($phone, $code, $from);
 
-						$this->response($this->returnMsg('0', $result), REST_Controller::HTTP_OK);
+						$this->response($this->returnMsg('0', $result, false), REST_Controller::HTTP_OK);
 
 					} else {
 
-						$this->response($this->returnMsg('1', $result), REST_Controller::HTTP_OK);
+						$this->response($this->returnMsg('1', 'system error', true), REST_Controller::HTTP_OK);
 
 					}
 
 				} catch (Exception $e) {
 
-					$this->response($this->returnMsg('2', $e), REST_Controller::HTTP_OK);
+					$this->log_model->system('error', $e);
+
+					$this->response($this->returnMsg('1', 'system error', true), REST_Controller::HTTP_OK);
 				}
 			}
 
 		} catch (Exception $e) {
 
-			$this->response($this->returnMsg('-1', lang('system error')), REST_Controller::HTTP_OK);
+			$this->log_model->system('error', $e);
+
+			$this->response($this->returnMsg('1', 'system error', true), REST_Controller::HTTP_OK);
 		}
 	}
 
-	private function returnMsg($code, $msg) {
+	public function auth_post() {
 
-		$ret = Array('code' => $code, 'message' => $msg);
+		try {
+
+			$phone = $this->post('phone');
+
+			$code = $this->post('code');
+
+			$from = $this->post('from');
+
+			$openId = $this->post('openid');
+
+			$this->log_model->frontEnd($phone, "login", "login");
+
+			if ($phone === null || !is_numeric($phone) || strlen($phone) != 11 || strlen($code) != 6) {
+
+				$this->response($this->returnMsg('1', 'invalid parameter', true), REST_Controller::HTTP_OK);
+
+			} else {
+
+				try {
+
+					$result = $this->login_model->userCheck($phone, $code, $from, true);
+
+					if ($result) {
+
+						$token = $this->user_model->generateToken(40);
+
+						$this->user_model->updateUser($phone, $openId, $token);
+
+						$this->response($this->returnMsg('0', $token, false), REST_Controller::HTTP_OK);
+
+					} else {
+
+						$this->response($this->returnMsg('1', 'invalid code', true), REST_Controller::HTTP_OK);
+
+					}
+
+				} catch (Exception $e) {
+
+					$this->log_model->system('error', $e);
+
+					$this->response($this->returnMsg('1', 'system error', true), REST_Controller::HTTP_OK);
+				}
+			}
+
+		} catch (Exception $e) {
+
+			$this->log_model->system('error', $e);
+
+			$this->response($this->returnMsg('1', 'system error', true), REST_Controller::HTTP_OK);
+		}
+	}
+
+	private function returnMsg($code, $msg, $needTranslate) {
+
+		if ($needTranslate) {
+
+			$ret = Array('code' => $code, 'message' => lang($msg));
+
+		} else {
+
+			$ret = Array('code' => $code, 'message' => $msg);
+		}
 
 		return $ret;
 

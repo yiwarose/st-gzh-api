@@ -15,7 +15,7 @@ class QQSMS {
 
 	private $appkey = "fb8e2d901c0faada42c291f5880da43d";
 
-	private $templId = 71582;
+	private $templId = 87788; //微信公众号登录，专用验证码
 
 	public function __construct() {
 		$this->CI = &get_instance();

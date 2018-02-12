@@ -5,38 +5,40 @@ class User_model extends CI_Model {
 	public function __construct() {
 		$this->load->database();
 	}
-	public function existUser($openId) {
+	public function existUser($phone) {
 
-		$sql = sprintf("select * from tb_users where fd_openid='%s' and fd_phone is not null and LENGTH(fd_phone)=11", $openId);
+		$sql = sprintf("select * from tb_user where fd_phone='%s' and LENGTH(fd_phone)=11", $phone);
 
 		$query = $this->db->query($sql);
 
-		if ($query->num_rows() >= 1) {return true;} else {return false;}
+		if ($query->num_rows() == 1) {return true;} else {return false;}
 	}
 
-	public function addUser($phone, $openId) {
+	public function updateUser($phone, $openId, $token) {
 
-		$user = array(
-			"fd_phone" => $phone,
-			"fd_openid" => $openId,
-		);
+		if ($this->existUser($phone)) {
 
-		$this->db->insert('tb_users', $user);
+			$user = array(
+				"fd_wxopenid" => $openId,
+				"fd_token" => $token,
+			);
+
+			$this->db->where(array('fd_phone' => $phone))->update('tb_user', $user);
+
+		} else {
+
+			$user = array(
+				"fd_phone" => $phone,
+				"fd_wxopenid" => $openId,
+				"fd_token" => $token,
+			);
+
+			$this->db->insert('tb_user', $user);
+		}
 
 		return true;
 	}
-	public function updateFace($openId, $faceId, $phone, $imageId) {
 
-		$user = array(
-			'fd_faceid' => $faceId,
-			'fd_imageid' => $imageId,
-		);
-
-		$this->db->where(array('fd_openid' => $openId, 'fd_phone' => $phone))->update('tb_users', $user);
-
-		return true;
-
-	}
 	public function generateToken($len = 20) {
 
 		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';

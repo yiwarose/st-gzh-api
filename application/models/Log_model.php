@@ -2,35 +2,35 @@
 
 class Log_model extends CI_Model {
 
-    public function __construct()
-    {
-        $this->load->database();
-    }
-    
+	public function __construct() {
+		$this->load->database();
+	}
 
-    public function add($phone,$content,$type,$action){
+	public function frontEnd($phone, $action, $content) {
 
-        $log=array(
-                "fd_handphone"=>$phone,
-                "fd_content"=>$content,
-                "fd_action"=>$action,
-                "fd_type"=>$type
-            );
+		$log = array(
+			"fd_handphone" => $phone,
+			"fd_content" => $content,
+			"fd_action" => $action,
+		);
 
-        $this -> db -> insert('tb_log',$log);
+		$this->db->insert('tb_frontenduserlog', $log);
 
-        return true;
+		return true;
 
-    } 
+	}
 
-    public function log($content,$type){
+	public function system($type, $content) {
 
-        $item=array('fd_content'=>$content,'fd_time'=>date('Y-m-d H:i:s'),'fd_type'=>$type);
+		$log = array(
+			"fd_type" => $type,
+			"fd_content" => $content,
+		);
 
-        $this->db->insert('tb_systemlog',$item);
+		$this->db->insert('tb_systemlog', $log);
 
-        return true;
+		return true;
 
+	}
 
-    }
 }
